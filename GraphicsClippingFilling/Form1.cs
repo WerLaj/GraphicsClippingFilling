@@ -15,17 +15,13 @@ namespace GraphicsClippingFilling
         public Bitmap pixel;
         public Bitmap bmp2;
         public Graphics graphics;
+        public Pen pen;
+        public List<Point> polygon;
+        public List<Point> line;
+        bool getLine = false;
+        bool getPolygon = false;
 
-        Point v1;
-        Point v2;
-        Point circle;
-
-        bool getv1 = false;
-        bool getv2 = false;
-        bool getcricle = false;
-
-        int radius = 50;
-        int thickness = 1;
+        Point v;
 
         public Form1()
         {
@@ -36,432 +32,299 @@ namespace GraphicsClippingFilling
             pixel = new Bitmap(1, 1);
             pictureBox1.Image = bmp;
             graphics = pictureBox1.CreateGraphics();
+            pen = new Pen(Color.Black, 2);
+            polygon = new List<Point> { new Point(220, 50), new Point(200, 180), new Point(40, 200), new Point(50, 50)};
+            line = new List<Point>();
         }
 
-        private void button1_Click(object sender, EventArgs e)
+        private void selectPointPolygon_Click(object sender, EventArgs e)
         {
-            getv1 = true;
+            getPolygon = true;
             pictureBox1.Cursor = Cursors.Cross;
         }
 
-        private void button2_Click(object sender, EventArgs e)
+        private void selectPointLine_Click(object sender, EventArgs e)
         {
-            getv2 = true;
+            getLine = true;
             pictureBox1.Cursor = Cursors.Cross;
         }
 
-        private void button3_Click(object sender, EventArgs e)
+        private void drawLineButton_Click(object sender, EventArgs e)
         {
-            getcricle = true;
-            pictureBox1.Cursor = Cursors.Cross;
+            graphics.DrawLine(pen, line.ElementAt(line.Count - 2), line.ElementAt(line.Count - 1));
         }
 
-        private void drawLinuButton_Click(object sender, EventArgs e)
+        private void drawPolygon_Click(object sender, EventArgs e)
         {
-            lineDDA(v1.X, v1.Y, v2.X, v2.Y);
-        }
-
-        void lineDDA(int x1, int y1, int x2, int y2)
-        {
-            if (x1 > x2)
+            Point v1 = polygon.First();
+            Point temp = v1;
+            foreach (var v in polygon)
             {
-                int temp = x1;
-                x1 = x2;
-                x2 = temp;
-                temp = y1;
-                y1 = y2;
-                y2 = temp;
+                graphics.DrawLine(pen, temp, v);
+                temp = v;
             }
-            float dy = y2 - y1;
-            float dx = x2 - x1;
-            float m = dy / dx;
-            float y = y1;
-            for (int x = x1; x <= x2; ++x)
-            {
-                pixel.SetPixel(0, 0, Color.Blue);
-                graphics.DrawImageUnscaled(pixel, x, (int)y);
-                bmp.SetPixel(x, (int)y, Color.Blue);
-                y += m;
-            }
-        }
-
-        private void button8_Click(object sender, EventArgs e)
-        {
-            supersampling(v1.X, v1.Y, v2.X, v2.Y, thickness);
-        }
-
-        void supersampling(int x1, int y1, int x2, int y2, int thickness)
-        {
-            int x1B = x1 * 2;
-            int x2B = x2 * 2;
-            int y1B = y1 * 2;
-            int y2B = y2 * 2;
-            int t = 2 * thickness;
-            float dy = y2B - y1B;
-            float dx = x2B - x1B;
-            float m = dy / dx;
-            float y = y1B;
-            int radius = t;
-            for (int x = x1B; x <= x2B; ++x)
-            {
-                int Left = x - radius;
-                int Right = x + radius;
-                int Top = (int)y - radius;
-                int Bottom = (int)y + radius;
-                for (int j = Top; j <= Bottom; ++j)
-                {
-                    for (int k = Left; k <= Right; ++k)
-                    {
-                        double c1 = x - k;
-                        int c2 = (int)y - j;
-                        double dist = Math.Pow(c1, 2.0) + Math.Pow(c2, 2.0);
-                        if (dist <= Math.Pow(radius, 2))
-                        {
-                            /*pixel.SetPixel(0, 0, Color.Black);
-                            graphics.DrawImageUnscaled(pixel, k, j);*/
-                            bmp2.SetPixel(k, j, Color.Black);
-                        }
-                    }
-                }
-                y += m;
-            }
-
-            for (int i = 0; i < bmp.Width; i++)
-            {
-                for (int j = 0; j < bmp.Height; j++)
-                {
-                    float avg = (bmp2.GetPixel(2 * i, 2 * j).R + bmp2.GetPixel(2 * i + 1, 2 * j).R + bmp2.GetPixel(2 * i, 2 * j + 1).R + bmp2.GetPixel(2 * i + 1, 2 * j + 1).R) / 4;
-                    Color c = Color.FromArgb((int)(avg), (int)(avg), (int)(avg));
-                    /*pixel.SetPixel(0, 0, c);
-                    graphics.DrawImageUnscaled(pixel, i, j);*/
-                    bmp.SetPixel(i, j, c);
-                }
-            }
+            graphics.DrawLine(pen, temp, v1);
+            //polygon.Clear();
         }
 
         private void pictureBox1_MouseDown(object sender, MouseEventArgs e)
         {
-            if (getv1)
+            if (getLine)
             {
-                v1 = new Point(e.X, e.Y);
-                ver1.Text = "x : " + e.X + " y : " + e.Y;
-            }
-            if (getv2)
-            {
-                v2 = new Point(e.X, e.Y);
+                v = new Point(e.X, e.Y);
                 ver2.Text = "x : " + e.X + " y : " + e.Y;
+                if (line.Count() == 2)
+                    line.Clear();
+                line.Add(v);
+                getLine = false;
             }
-            if (getcricle)
+            else if(getPolygon)
             {
-                circle = new Point(e.X, e.Y);
-                circleLabel.Text = "x : " + e.X + " y : " + e.Y;
+                v = new Point(e.X, e.Y);
+                ver1.Text = "x : " + e.X + " y : " + e.Y;
+                if (polygon.Count() == 4)
+                    polygon.Clear();
+                polygon.Add(v);
+                getPolygon = false;
             }
 
             pictureBox1.Cursor = Cursors.Default;
-            getv1 = false;
-            getv2 = false;
-            getcricle = false;
         }
 
-        void MidpointCircle(int radius, int x0, int y0)
+        double dotProduct(Point p1, Point p2)
         {
-            /*
-            int d = (5 - radius * 4) / 4;
-            int x = 0;
-            int y = radius;
-
-            do
-            {
-                // ensure index is in range before setting (depends on your image implementation)
-                // in this case we check if the pixel location is within the bounds of the image before setting the pixel
-                if (centerX + x >= 0 && centerX + x <= pictureBox1.Width - 1 && centerY + y >= 0 && centerY + y <= pictureBox1.Height - 1) bmp.SetPixel(centerX + x, centerY + y, Color.Blue);
-                if (centerX + x >= 0 && centerX + x <= pictureBox1.Width - 1 && centerY - y >= 0 && centerY - y <= pictureBox1.Height - 1) bmp.SetPixel(centerX + x, centerY - y, Color.Blue);
-                if (centerX - x >= 0 && centerX - x <= pictureBox1.Width - 1 && centerY + y >= 0 && centerY + y <= pictureBox1.Height - 1) bmp.SetPixel(centerX - x, centerY + y, Color.Blue);
-                if (centerX - x >= 0 && centerX - x <= pictureBox1.Width - 1 && centerY - y >= 0 && centerY - y <= pictureBox1.Height - 1) bmp.SetPixel(centerX - x, centerY - y, Color.Blue);
-                if (centerX + y >= 0 && centerX + y <= pictureBox1.Width - 1 && centerY + x >= 0 && centerY + x <= pictureBox1.Height - 1) bmp.SetPixel(centerX + y, centerY + x, Color.Blue);
-                if (centerX + y >= 0 && centerX + y <= pictureBox1.Width - 1 && centerY - x >= 0 && centerY - x <= pictureBox1.Height - 1) bmp.SetPixel(centerX + y, centerY - x, Color.Blue);
-                if (centerX - y >= 0 && centerX - y <= pictureBox1.Width - 1 && centerY + x >= 0 && centerY + x <= pictureBox1.Height - 1) bmp.SetPixel(centerX - y, centerY + x, Color.Blue);
-                if (centerX - y >= 0 && centerX - y <= pictureBox1.Width - 1 && centerY - x >= 0 && centerY - x <= pictureBox1.Height - 1) bmp.SetPixel(centerX - y, centerY - x, Color.Blue);
-                if (d < 0)
-                {
-                    d += 2 * x + 1;
-                }
-                else
-                {
-                    d += 2 * (x - y) + 1;
-                    y--;
-                }
-                x++;
-            } while (x <= y);*/
-
-            int d = 1 - radius;
-            int x = 0;
-            int y = radius;
-            pixel.SetPixel(0, 0, Color.Blue);
-            graphics.DrawImageUnscaled(pixel, x + x0, y + y0);
-            bmp.SetPixel(x + x0, y + y0, Color.Blue);
-            while (y >= x)
-            {
-                if (d < 0) //move to E
-                    d += 2 * x + 3;
-                else //move to SE
-                {
-                    d += 2 * x - 2 * y + 5;
-                    --y;
-                }
-                ++x;
-                pixel.SetPixel(0, 0, Color.Blue);
-                graphics.DrawImageUnscaled(pixel, x0 + x, y0 + y);
-                bmp.SetPixel(x0 + x, y0 + y, Color.Blue);
-                pixel.SetPixel(0, 0, Color.Blue);
-                graphics.DrawImageUnscaled(pixel, x0 + y, y0 + x);
-                bmp.SetPixel(x0 + y, y0 + x, Color.Blue);
-                pixel.SetPixel(0, 0, Color.Blue);
-                graphics.DrawImageUnscaled(pixel, x0 - y, y0 + x);
-                bmp.SetPixel(x0 - y, y0 + x, Color.Blue);
-                pixel.SetPixel(0, 0, Color.Blue);
-                graphics.DrawImageUnscaled(pixel, x0 - x, y0 + y);
-                bmp.SetPixel(x0 - x, y0 + y, Color.Blue);
-                pixel.SetPixel(0, 0, Color.Blue);
-                graphics.DrawImageUnscaled(pixel, x0 - x, y0 - y);
-                bmp.SetPixel(x0 - x, y0 - y, Color.Blue);
-                pixel.SetPixel(0, 0, Color.Blue);
-                graphics.DrawImageUnscaled(pixel, x0 - y, y0 - x);
-                bmp.SetPixel(x0 - y, y0 - x, Color.Blue);
-                pixel.SetPixel(0, 0, Color.Blue);
-                graphics.DrawImageUnscaled(pixel, x0 + y, y0 - x);
-                bmp.SetPixel(x0 + y, y0 - x, Color.Blue);
-                pixel.SetPixel(0, 0, Color.Blue);
-                graphics.DrawImageUnscaled(pixel, x0 + x, y0 - y);
-                bmp.SetPixel(x0 + x, y0 - y, Color.Blue);
-            }
+            return p1.X * p2.X + p1.Y * p2.Y;
         }
 
-        public float cover(float d, float r)
+        /*Point[] getOutsidenormal(Point vertex1, Point vertex2)
         {
-            float cov = 0;
+            Point[] normal = new Point[2];
+            Point midpoint = new Point();
+            Point p3 = new Point();
+            Point p4 = new Point();
 
-            if (d <= r)
-            {
-                double a = Math.Acos(d / r);
-                float c1 = Convert.ToSingle((1 / Math.PI) * a);
-                float c2 = Convert.ToSingle((d * Math.Sqrt(r * r - d * d)) / (Math.PI * r * r));
-                cov = c1 - c2;
-            }
-            else
-            {
-                cov = 0;
-            }
+            // Calculate the slope of the original line. (y2 - y1) / (x2 - x1) = slope
+            double slope = ((double)(vertex2.Y - vertex1.Y) / (double)(vertex2.X - vertex1.X));
 
-            return cov;
+            // Perpendicular lines have a slope of (-1 / originalSlope) -- the negative reciprocal.
+            slope = -1 / slope;
+
+            midpoint.X = (vertex1.X + vertex2.X) / 2;
+            midpoint.Y = (vertex1.Y + vertex2.Y) / 2;
+
+            p3.X = midpoint.X;
+            p3.Y = midpoint.Y;
+
+            // Find the y-intercept of this equation. y=mx + b
+            double b = -slope * midpoint.X + midpoint.Y;
+
+            // Finally start calculating the final point. Add the length of the line to X.
+            p4.X = midpoint.X + 8;
+
+            // Now plug our slope, intercept, and new X into y=mx + b
+            p4.Y = (int)(slope * (midpoint.X + 8) + b);
+
+            normal[0] = p3;
+            normal[1] = p4;
+
+            return normal;
+        }*/
+
+        
+        Point getInsideNormal( Point p1, Point p2/*, Point z*/)
+        {
+            int delX = p2.X - p1.X;
+            int delY = p2.Y - p1.Y;
+            Point n = new Point( -delY, delX );
+            /*Point v = new Point( z.X - p1.X, z.Y - p1.Y );
+            double dot = dotProduct(v, n);
+            if (dot < 0) //outside normal
+            {
+                n.X *= -1;
+                n.Y *= -1;
+            }*/
+            return n;
         }
 
-        public float coverage(float w, float D)
+        /*void cyrusBeck(List<Point> polygon, Point p1, Point p2)
         {
-            float cov = 0;
-            float r = (float)pixel.Width / 2;
-
-            if (w >= r)
+            int delX = p2.X - p1.X;
+            int delY = p2.Y - p1.Y;
+            Point D = new Point(delX, delY);
+            Point temp = polygon.ElementAt(polygon.Count() - 1);
+            double tE = 0, tL = 1;
+            foreach (var p in polygon)
             {
-                if (w <= D)
+                Point normal = getInsideNormal(temp, p);
+                Point PEi = new Point((temp.X + p.X) / 2, (temp.Y + p.Y) / 2);
+                Point x = new Point(p1.X - PEi.X, p1.Y - PEi.Y);
+                double nominator = dotProduct(normal, x);
+                double denominator = dotProduct(normal, D);
+                double t = - nominator / denominator;
+                if (denominator == 0) //line and edge are parallel
                 {
-                    cov = cover(D - w, r);
-                }
-                else if (D >= 0 && D <= w)
-                {
-                    cov = 1 - cover(w - D, r);
-                }
-            }
-            else
-            {
-                if (D >= 0 && D <= w)
-                {
-                    cov = 1 - cover(w - D, r) - cover(w + D, r);
-                }
-                else if (D >= w && D <= r - w)
-                {
-                    cov = cover(D - w, r) - cover(D + w, r);
-                }
-                else if (D >= r - w && D <= r + w)
-                {
-                    cov = cover(D - w, r);
-                }
-            }
-
-            return cov;
-        }
-
-        public bool IntensifyPixel(int x, int y, float thickness, float distance)
-        {
-            float cov = coverage(thickness, distance);
-            if (cov > 0)
-            {
-                pixel.SetPixel(0, 0, lerp(Color.White, Color.Blue, cov));
-                graphics.DrawImageUnscaled(pixel, x, y);
-                bmp.SetPixel(x, y, lerp(Color.White, Color.Blue, cov));
-                return true;
-            }
-            return false;
-        }
-
-        public Color lerp(Color a, Color b, float t)
-        {
-            int red = (int)(a.R + (b.R - a.R) * t);
-            if (red > 255) red = 255;
-            if (red < 0) red = 0;
-            int green = (int)(a.G + (b.G - a.G) * t);
-            if (green > 255) green = 255;
-            if (green < 0) green = 0;
-            int blue = (int)(a.B + (b.B - a.B) * t);
-            if (blue > 255) blue = 255;
-            if (blue < 0) blue = 0;
-            return Color.FromArgb(red, green, blue);
-        }
-
-        public void ThickAntialiasedLine(int x1, int y1, int x2, int y2, float thickness)
-        {
-            int dx = x2 - x1, dy = y2 - y1;
-            float steep = Math.Abs(dy / dx);
-            int delayY = 1;
-            if (steep > 1)
-            {
-                int temp = x1;
-                x1 = y1;
-                y1 = temp;
-                int temp2 = x2;
-                x2 = y2;
-                y2 = temp2;
-            }
-            if (x1 > x2)
-            {
-                int temp = x1;
-                x1 = x2;
-                x2 = temp;
-                int temp2 = y1;
-                y1 = y2;
-                y2 = temp2;
-            }
-            if (y1 > y2)
-            {
-                delayY = -1;
-            }
-            dx = x2 - x1;
-            dy = y2 - y1;
-            int dE = 2 * dy, dNE = 2 * (dy - dx);
-            int d = 2 * dy - dx;
-            int two_v_dx = 0; //numerator, v=0 for the first pixel
-            float invDenom = Convert.ToSingle(1 / (2 * Math.Sqrt(dx * dx + dy * dy))); //inverted denominator
-            float two_dx_invDenom = 2 * dx * invDenom; //precomputed constant
-            int x = x1, y = y1;
-            int i;
-            if (steep > 1)
-            {
-                IntensifyPixel(x, y, thickness, 0);
-                for (i = 1; IntensifyPixel(y + i * delayY, x, thickness, i * delayY * two_dx_invDenom); ++i) ;
-                for (i = 1; IntensifyPixel(y - i * delayY, x, thickness, i * delayY * two_dx_invDenom); ++i) ;
-            }
-            else
-            {
-                IntensifyPixel(x, y, thickness, 0);
-                for (i = 1; IntensifyPixel(x, y + i, thickness, i * two_dx_invDenom); ++i) ;
-                for (i = 1; IntensifyPixel(x, y - i, thickness, i * two_dx_invDenom); ++i) ;
-            }
-            while (x < x2)
-            {
-                ++x;
-                if (d < 0) // move to E
-                {
-                    two_v_dx = d + dx;
-                    d += dE;
-                }
-                else // move to NE
-                {
-                    two_v_dx = d - dx;
-                    d += dNE;
-                    //++y; ////deltay
-                    y = y + delayY;
-                }
-                // Now set the chosen pixel and its neighbors
-                if (steep > 1)
-                {
-                    IntensifyPixel(y, x, thickness, two_v_dx * invDenom);
-                    for (i = 1; IntensifyPixel(y + i * delayY, x, thickness, i * delayY * two_dx_invDenom - two_v_dx * invDenom); ++i) ;
-                    for (i = 1; IntensifyPixel(y - i * delayY, x, thickness, i * delayY * two_dx_invDenom + two_v_dx * invDenom); ++i) ;
-                }
-                else
-                {
-                    IntensifyPixel(x, y, thickness, two_v_dx * invDenom);
-                    for (i = 1; IntensifyPixel(x, y + i, thickness, i * two_dx_invDenom - two_v_dx * invDenom); ++i) ;
-                    for (i = 1; IntensifyPixel(x, y - i, thickness, i * two_dx_invDenom + two_v_dx * invDenom); ++i) ;
-                }
-            }
-        }
-
-        private void button4_Click(object sender, EventArgs e)
-        {
-            MidpointCircle(radius, circle.X, circle.Y);
-        }
-
-        private void radiusTextBox_Leave(object sender, EventArgs e)
-        {
-            radius = Int32.Parse(radiusTextBox.Text.ToString());
-        }
-
-        private void button5_Click(object sender, EventArgs e)
-        {
-            ThickAntialiasedLine(v1.X, v1.Y, v2.X, v2.Y, thickness);
-        }
-
-        private void thicknessComboBox_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            thickness = (int)thicknessComboBox.SelectedIndex * 2 + 1;
-        }
-
-        private void button6_Click(object sender, EventArgs e)
-        {
-            drawWithPen(v1.X, v1.Y, v2.X, v2.Y, thickness);
-        }
-
-        public void drawWithPen(int x1, int y1, int x2, int y2, int t)
-        {
-            if (x1 > x2)
-            {
-                int temp = x1;
-                x1 = x2;
-                x2 = temp;
-                int temp2 = y1;
-                y1 = y2;
-                y2 = temp2;
-            }
-            float dy = y2 - y1;
-            float dx = x2 - x1;
-            float m = dy / dx;
-            float y = y1;
-            int radius = t;
-            for (int x = x1; x <= x2; ++x)
-            {
-                int Left = x - radius;
-                int Right = x + radius;
-                int Top = (int)y - radius;
-                int Bottom = (int)y + radius;
-                for (int j = Top; j <= Bottom; ++j)
-                {
-                    for (int k = Left; k <= Right; ++k)
+                    if (nominator < 0)
                     {
-                        double c1 = x - k;
-                        int c2 = (int)y - j;
-                        double dist = Math.Pow(c1, 2.0) + Math.Pow(c2, 2.0);
-                        if (dist <= Math.Pow(radius, 2))
-                        {
-                            pixel.SetPixel(0, 0, Color.Blue);
-                            graphics.DrawImageUnscaled(pixel, k, j);
-                            bmp.SetPixel(k, j, Color.Blue);
-                        }
+                        return;
+                    }
+                    else
+                    {
+                        continue;
                     }
                 }
-                y += m;
+                if (denominator < 0)
+                    tE = Math.Max(tE, t);
+                else
+                    tL = Math.Min(tL, t);
+                temp = p;
             }
+            if (tE > tL)
+            {
+                return;
+            }
+            double x1 = p1.X + delX * tE;
+            double y1 = p1.Y + delY * tE;
+            double x2 = p1.X + delX * tL;
+            double y2 = p1.Y + delY * tL;
+            graphics.DrawLine(pen, (int)x1, (int)y1, (int)x2, (int)y2);
+            //graphics.DrawLine(pen, (int)(p1.X + tE * delX), (int)(p1.Y + tE * delY), (int)(p1.X + tL * delX), (int)(p1.Y + tL * delY));
+        }*/
+
+        void cyrusBeck(List<Point> polygon, Point p1, Point p2)
+        {
+            if (p1.X > p2.X)
+            {
+                Point temp = p1;
+                p1 = p2;
+                p2 = temp;
+            }
+            int delX = p2.X - p1.X;
+            int delY = p2.Y - p1.Y;
+            //vector D = Direction vector
+            Point D = new Point(delX, delY);
+
+            Point temp1 = polygon.ElementAt(polygon.Count() - 1);
+            //Point temp2 = polygon.ElementAt(polygon.Count() - 1);
+            double tEnter = 0;
+            double tLeave = 1;
+            foreach(var p in polygon)
+            {
+                Point n = getInsideNormal(temp1, p);
+                temp1 = p;
+                Point w = new Point(p1.X - p.X, p1.Y - p.Y);
+                double num = dotProduct(w, n);
+                double den = dotProduct(D, n);
+                if (den == 0) //line and edge are parallel
+                {
+                    if (num < 0) //w.n<0  -> point/line outside coz P(t) outside polygon
+                    {
+                        return;
+                    }
+                    else
+                    {
+                        continue;
+                    }
+                }
+
+                double t = -num / den;
+                if (den > 0)
+                {
+                    tEnter = Math.Max(tEnter, t);
+                }
+                else
+                {
+                    tLeave = Math.Min(tLeave, t);
+                }
+            }
+            if (tEnter > tLeave)
+            {
+                return;
+            }
+            double x1 = p1.X + delX * tEnter;
+            double y1 = p1.Y + delY * tEnter;
+            double x2 = p1.X + delX * tLeave;
+            double y2 = p1.Y + delY * tLeave;
+            graphics.DrawLine( pen, (int)x1, (int)y1 , (int)x2, (int)y2 );
         }
 
+        private void clipButton_Click(object sender, EventArgs e)
+        {
+            cyrusBeck(polygon, line.ElementAt(0), line.ElementAt(1));
+        }
+
+        public void fillPolygon(List<Point> polygon)
+        {
+
+        }
+
+        private void fillButton_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        /*void cyrusBeck(List<Point> polygon, Point p1, Point p2)
+        {
+            if (p1.X > p2.X)
+            {
+                Point temp = p1;
+                p1 = p2;
+                p2 = temp;
+            }
+            int delX = p2.X - p1.X;
+            int delY = p2.Y - p1.Y;
+            //vector D = Direction vector
+            Point D = new Point(delX, delY);
+
+            Point temp1 = polygon.ElementAt(polygon.Count() - 2);
+            Point temp2 = polygon.ElementAt(polygon.Count() - 1);
+            double tEnter = 0;
+            double tLeave = 1;
+            foreach(var p in polygon)
+            {
+                Point ptemp = p;
+                if (temp2.X > p.X)
+                {
+                    Point temp = temp2;
+                    temp2 = p;
+                    ptemp = temp;
+                }
+                Point n = getInsideNormal(temp2, ptemp, temp1);
+                temp1 = temp2;
+                temp2 = ptemp;
+                Point w = new Point(p1.X - ptemp.X, p1.Y - ptemp.Y);
+                double num = dotProduct(w, n);
+                double den = dotProduct(D, n);
+                if (den == 0) //line and edge are parallel
+                {
+                    if (num < 0) //w.n<0  -> point/line outside coz P(t) outside polygon
+                    {
+                        return;
+                    }
+                    else
+                    {
+                        continue;
+                    }
+                }
+
+                double t = -num / den;
+                if (den > 0)
+                {
+                    tEnter = Math.Max(tEnter, t);
+                }
+                else
+                {
+                    tLeave = Math.Min(tLeave, t);
+                }
+            }
+            if (tEnter > tLeave)
+            {
+                return;
+            }
+            double x1 = p1.X + delX * tEnter;
+            double y1 = p1.Y + delY * tEnter;
+            double x2 = p1.X + delX * tLeave;
+            double y2 = p1.Y + delY * tLeave;
+            graphics.DrawLine( pen, (int)x1, (int)y1 , (int)x2, (int)y2 );
+        }*/
     }
 }
