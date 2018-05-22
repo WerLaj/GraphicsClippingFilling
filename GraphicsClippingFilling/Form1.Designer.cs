@@ -40,6 +40,8 @@
             this.label3 = new System.Windows.Forms.Label();
             this.button2 = new System.Windows.Forms.Button();
             this.fillButton = new System.Windows.Forms.Button();
+            this.drawShapeButton = new System.Windows.Forms.Button();
+            this.boundaryButton = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.SuspendLayout();
             // 
@@ -154,11 +156,33 @@
             this.fillButton.UseVisualStyleBackColor = true;
             this.fillButton.Click += new System.EventHandler(this.fillButton_Click);
             // 
+            // drawShapeButton
+            // 
+            this.drawShapeButton.Location = new System.Drawing.Point(792, 402);
+            this.drawShapeButton.Name = "drawShapeButton";
+            this.drawShapeButton.Size = new System.Drawing.Size(168, 23);
+            this.drawShapeButton.TabIndex = 18;
+            this.drawShapeButton.Text = "DrawShape";
+            this.drawShapeButton.UseVisualStyleBackColor = true;
+            this.drawShapeButton.Click += new System.EventHandler(this.drawShapeButton_Click);
+            // 
+            // boundaryButton
+            // 
+            this.boundaryButton.Location = new System.Drawing.Point(792, 374);
+            this.boundaryButton.Name = "boundaryButton";
+            this.boundaryButton.Size = new System.Drawing.Size(166, 23);
+            this.boundaryButton.TabIndex = 19;
+            this.boundaryButton.Text = "BoundaryAlgorithm";
+            this.boundaryButton.UseVisualStyleBackColor = true;
+            this.boundaryButton.Click += new System.EventHandler(this.boundaryButton_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(973, 576);
+            this.Controls.Add(this.boundaryButton);
+            this.Controls.Add(this.drawShapeButton);
             this.Controls.Add(this.fillButton);
             this.Controls.Add(this.ver2);
             this.Controls.Add(this.label3);
@@ -192,6 +216,8 @@
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.Button button2;
         private System.Windows.Forms.Button fillButton;
+        private System.Windows.Forms.Button drawShapeButton;
+        private System.Windows.Forms.Button boundaryButton;
     }
 }
 

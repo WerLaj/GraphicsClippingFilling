@@ -28,9 +28,9 @@ namespace GraphicsClippingFilling
         {
             public int ymin { get; set; }
             public int ymax { get; set; }
-            public int xmin { get; set; }
+            public float xmin { get; set; }
             public float oneoverm { get; set; }
-            public float b { get; set; }
+            //public float b { get; set; }
             //public ETentry next { get; set; }
 
             /*ETentry getYminEntry(List<ETentry> list)
@@ -225,13 +225,19 @@ namespace GraphicsClippingFilling
                 ETentry et = new ETentry();
                 et.ymin = Math.Min(v.Y, temp.Y);
                 et.ymax = Math.Max(v.Y, temp.Y);
-                et.xmin = Math.Min(v.X, temp.X);
+                //et.xmin = Math.Min(v.X, temp.X); //wspolrzedna x od ymin
+                if (v.Y < temp.Y)
+                    et.xmin = v.X;
+                else
+                    et.xmin = temp.X;
                 int dy = (v.Y - temp.Y);
                 int dx = (v.X - temp.X);
-                if (dy == 0) et.oneoverm = 1;
-                if (dx == 0) et.oneoverm = 0;
-                if( dx != 0 && dy != 0) et.oneoverm = (float) dy / (float) dx;
-                et.b = v.Y - et.oneoverm * v.X;
+                //if (dy == 0) et.oneoverm = 1;
+                //if (dx == 0) et.oneoverm = 0;
+                if (dy == 0) et.oneoverm = 0;
+                //if( dx != 0 && dy != 0) et.oneoverm = (float) dy / (float) dx;
+                if (dy != 0) et.oneoverm = (float)dx / (float)dy;
+                //et.b = v.Y - et.oneoverm * v.X;
                 //et.next = null;
                 edgeTable.Add(et);
                
@@ -243,14 +249,14 @@ namespace GraphicsClippingFilling
             return edgeTable;
         }
 
-        public void fillPolygon(List<Point> polygon)
+        public void fillPolygon(List<Point> polygon, Color color)
         {
             List<ETentry> edgeTable = getEgdeTable(polygon);
             ETentry ETmin = edgeTable[0];
             int y = ETmin.ymin;
             List<ETentry> activeEdgeTable = new List<ETentry>();
-            SolidBrush br = new SolidBrush(Color.Maroon);
-            while( edgeTable.Count != 0 || activeEdgeTable.Count != 0)
+            SolidBrush br = new SolidBrush(color);
+            while( edgeTable.Count != 0 || activeEdgeTable.Count != 0 )
             {
                 List<ETentry> toRemove = new List<ETentry>();
                 foreach (var et in edgeTable)
@@ -259,6 +265,10 @@ namespace GraphicsClippingFilling
                     {
                         activeEdgeTable.Add(et);
                         toRemove.Add(et);
+                    }
+                    else
+                    {
+                        break;
                     }
                 }
                 foreach(var et in toRemove)
@@ -270,15 +280,16 @@ namespace GraphicsClippingFilling
 
                 for(int n = 0; n < activeEdgeTable.Count; n+=2)
                 {
-                    int border1 = (int)((y - activeEdgeTable[n].b) / (activeEdgeTable[n].oneoverm / 1));
-                    int border2 = (int)((y - activeEdgeTable[n + 1].b) / (activeEdgeTable[n + 1].oneoverm / 1));
-                    if(border1 > border2)
-                    {
-                        int temp = border1;
-                        border1 = border2;
-                        border2 = temp;
-                    }
-                    for (int a = border1; a <= border2; a++)
+                    //int border1 = (int)((y - activeEdgeTable[n].b) / (activeEdgeTable[n].oneoverm / 1));
+                    //int border2 = (int)((y - activeEdgeTable[n + 1].b) / (activeEdgeTable[n + 1].oneoverm / 1));
+                    //if(border1 > border2)
+                    //{
+                    //    int temp = border1;
+                    //    border1 = border2;
+                    //    border2 = temp;
+                    //}
+                    //for (int a = border1; a <= border2; a++)
+                    for(int a = (int)activeEdgeTable[n].xmin; (int)a <= activeEdgeTable[n+1].xmin; a++)
                     {
                         graphics.FillRectangle(br, a, y, 1, 1);
                     }
@@ -294,15 +305,46 @@ namespace GraphicsClippingFilling
 
                 foreach (var e in activeEdgeTable.ToList())
                 {
-                    e.xmin += (int)e.oneoverm;
+                    e.xmin += e.oneoverm;
                 }                        
             }
         }
 
         private void fillButton_Click(object sender, EventArgs e)
         {
-            fillPolygon(polygon);
+            fillPolygon(polygon, Color.Maroon);
         }
+
+        private void drawShapeButton_Click(object sender, EventArgs e)
+        {
+            Rectangle rec = new Rectangle(0, 0, pictureBox1.Width, pictureBox1.Height);
+            SolidBrush br = new SolidBrush(Color.Green);
+            graphics.FillRectangle(br, rec);
+            SolidBrush br1 = new SolidBrush(Color.Maroon);
+            graphics.FillEllipse(br1, 100, 100, 100, 100);
+            SolidBrush br2 = new SolidBrush(Color.Yellow);
+            graphics.FillEllipse(br2, 120, 120, 20, 20);
+            graphics.FillEllipse(br2, 160, 160, 20, 20);
+        }
+
+        public void boundaryFill4(int x, int y, Color boundary, Color newColor)
+        {
+            
+        }
+
+        private void boundaryButton_Click(object sender, EventArgs e)
+        {
+            Color boundary = bmp.GetPixel(line.ElementAt(0).X, line.ElementAt(0).Y);
+            Color newColor = bmp.GetPixel(line.ElementAt(1).X, line.ElementAt(1).Y);
+            for(int x = 0; x < pictureBox1.Width; x++)
+            {
+                for (int y = 0; y < pictureBox1.Height; y++)
+                {
+                    boundaryFill4(x, y, boundary, newColor);
+                }
+            }
+        }
+
 
         /*public List<ETentry> getEgdeTable(List<Point> polygon)
         {
@@ -343,31 +385,31 @@ namespace GraphicsClippingFilling
                 }
             }*/
 
-            /*List<ETentry> edgeTable2 = new List<ETentry>();
-            edgeTable2[edgeTable.Count - 1] = edgeTable[edgeTable.Count - 1];
-            int i = edgeTable.Count - 1; 
+        /*List<ETentry> edgeTable2 = new List<ETentry>();
+        edgeTable2[edgeTable.Count - 1] = edgeTable[edgeTable.Count - 1];
+        int i = edgeTable.Count - 1; 
 
-            for( int k = edgeTable.Count - 2; k >= 0; k--)
+        for( int k = edgeTable.Count - 2; k >= 0; k--)
+        {
+            if(edgeTable[k].ymin == edgeTable2[i].ymin)
             {
-                if(edgeTable[k].ymin == edgeTable2[i].ymin)
-                {
-                    edgeTable2[i].next = edgeTable[k];
-                }
-                else
-                {
-                    i--;
-                    edgeTable2[i] = edgeTable[k];
-                }
+                edgeTable2[i].next = edgeTable[k];
             }
-
-            foreach(var et in edgeTable2)
+            else
             {
-                if (et == null)
-                    edgeTable2.Remove(et);
+                i--;
+                edgeTable2[i] = edgeTable[k];
             }
+        }
 
-            return edgeTable;
-        }*/
+        foreach(var et in edgeTable2)
+        {
+            if (et == null)
+                edgeTable2.Remove(et);
+        }
+
+        return edgeTable;
+    }*/
 
         /*Point[] getOutsidenormal(Point vertex1, Point vertex2)
        {
